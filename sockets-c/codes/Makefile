@@ -5,7 +5,7 @@ CC=gcc
 #Flasgs
 CFLAGS=-Wall -pthread
 
-all: client.o server-select.o server-thread.o server.o
+all: client.o server-select.o server-thread.o server.o showip.o
 
 client.o:
 	@echo Comp. Client
@@ -22,6 +22,10 @@ server-thread.o:
 server.o:
 	@echo Comp. Server
 	$(CC) $(CFLAGS) server.c -o server
+
+showip.o:
+	@echo Comp. Server
+	$(CC) $(CFLAGS) showip.c -o showip
 
 clean:
 	rm -rf client server server-thread server-select *.o *.out
