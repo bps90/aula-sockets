@@ -1,74 +1,79 @@
 //============================================================================
-// Name        : client.c
-// Author      : Silver Moon
-// Edited by   : Bruno P. Santos
+// Nome        : client.c
+// Autor       : Silver Moon
+// Editado por : Bruno P. Santos
 // Copyright   :
-// Description : C ECHO client example using sockets, Ansi-style
+// Descrição   : Cliente ECHO em C utilizando sockets, estilo Ansi
 //============================================================================
 
-#include <arpa/inet.h>   // inet_addr
-#include <stdio.h>       // printf
-#include <stdlib.h>      // atoi
-#include <string.h>      // strlen
-#include <sys/socket.h>  // socket
-#include <unistd.h>      // close
+#include <arpa/inet.h>   // Para inet_addr
+#include <stdio.h>       // Para printf
+#include <stdlib.h>      // Para atoi
+#include <string.h>      // Para strlen
+#include <sys/socket.h>  // Para socket
+#include <unistd.h>      // Para close
 
 int main(int argc, char* argv[]) {
     int sock;
     struct sockaddr_in server;
     char message[1000], server_reply[2000];
 
-    // Check for required arguments
+    // Verifica se os argumentos necessários foram passados
     if (argc != 3) {
-        printf("Usage: %s <IP address> <Port>\n", argv[0]);
+        printf("Uso: %s <Endereço IP> <Porta>\n", argv[0]);
         return 1;
     }
 
-    // Convert command-line arguments
+    // Converte os argumentos da linha de comando
     const char *ip_address = argv[1];
     int port = atoi(argv[2]);
 
-    // Create socket
+    // Cria o socket
     sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock == -1) {
-        printf("Could not create socket\n");
+        printf("Não foi possível criar o socket\n");
         return 1;
     }
-    puts("Socket created");
+    puts("Socket criado");
 
-    server.sin_addr.s_addr = inet_addr(ip_address);  // Use provided IP address
+    // Define as informações do servidor
+    server.sin_addr.s_addr = inet_addr(ip_address);
     server.sin_family = AF_INET;
-    server.sin_port = htons(port);                   // Use provided port
+    server.sin_port = htons(port);
 
-    // Connect to remote server
+    // Conecta ao servidor remoto
     if (connect(sock, (struct sockaddr*)&server, sizeof(server)) < 0) {
-        perror("Connect failed. Error");
+        perror("Falha na conexão");
         return 1;
     }
 
-    puts("Connected\n");
+    puts("Conectado\n");
 
-    // Keep communicating with the server
+    // Mantém a comunicação com o servidor
     while (1) {
-        printf("Enter message: ");
-        scanf("%s", message);
+        printf("Digite a mensagem: ");
+        fgets(message, sizeof(message), stdin);
 
-        // Send data
+        // Envia a mensagem
         if (send(sock, message, strlen(message), 0) < 0) {
-            puts("Send failed");
+            puts("Falha ao enviar");
             return 1;
         }
 
-        // Receive a reply from the server
+        // Recebe a resposta do servidor
         if (recv(sock, server_reply, 2000, 0) < 0) {
-            puts("Receive failed");
+            puts("Falha ao receber a resposta");
             break;
         }
 
-        printf("Server reply: ");
-        puts(server_reply);
+        printf("Resposta do servidor: %s\n", server_reply);
+
+        // Limpa o buffer server_reply após imprimir a resposta
+        memset(server_reply, 0, sizeof(server_reply));
     }
 
+    // Fecha o socket
     close(sock);
+
     return 0;
 }

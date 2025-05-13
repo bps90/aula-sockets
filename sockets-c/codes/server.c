@@ -1,79 +1,86 @@
 //============================================================================
-// Name        : server.c
-// Author      : Silver Moon
-// Edited by   : Bruno P. Santos
+// Nome        : server.c
+// Autor       : Silver Moon
+// Editado por : Bruno P. Santos
 // Copyright   :
-// Description : Server to handle a connection C, Ansi-style
+// Descrição   : Servidor para lidar com uma conexão em C, estilo Ansi
 //============================================================================
 
-#include <arpa/inet.h>  //inet_addr
+#include <arpa/inet.h>  // Para inet_addr
 #include <stdio.h>
-#include <stdlib.h>     // atoi
-#include <string.h>     // strlen
+#include <stdlib.h>     // Para atoi
+#include <string.h>     // Para strlen
 #include <sys/socket.h>
-#include <unistd.h>     // write
+#include <unistd.h>     // Para write
 
 int main(int argc, char* argv[]) {
     int socket_desc, client_sock, c, read_size;
     struct sockaddr_in server, client;
     char client_message[2000];
 
-    // Check for required arguments
+    // Verifica se os argumentos necessários foram passados
     if (argc != 3) {
-        printf("Usage: %s <IP address> <Port>\n", argv[0]);
+        printf("Uso: %s <Endereço IP> <Porta>\n", argv[0]);
         return 1;
     }
 
-    // Convert command-line arguments
+    // Converte os argumentos da linha de comando
     const char *ip_address = argv[1];
     int port = atoi(argv[2]);
 
-    // Create socket
+    // Cria o socket
     socket_desc = socket(AF_INET, SOCK_STREAM, 0);
     if (socket_desc == -1) {
-        printf("Could not create socket\n");
+        printf("Não foi possível criar o socket\n");
         return 1;
     }
-    puts("Socket created");
+    puts("Socket criado");
 
-    // Prepare the sockaddr_in structure
+    // Prepara a estrutura sockaddr_in
     server.sin_family = AF_INET;
-    server.sin_addr.s_addr = inet_addr(ip_address);  // Use provided IP address
-    server.sin_port = htons(port);                   // Use provided port
+    server.sin_addr.s_addr = inet_addr(ip_address);
+    server.sin_port = htons(port);
 
-    // Bind
+    // Realiza o bind (associa o socket ao IP e porta)
     if (bind(socket_desc, (struct sockaddr*)&server, sizeof(server)) < 0) {
-        perror("Bind failed. Error");
+        perror("Falha no bind. Erro");
         return 1;
     }
-    puts("Bind done");
+    puts("Bind realizado");
 
-    // Listen
+    // Define o socket para ouvir conexões
     listen(socket_desc, 1);
 
-    // Accept an incoming connection
-    puts("Waiting for incoming connections...");
+    // Aguarda por conexões
+    puts("Aguardando conexões...");
     c = sizeof(struct sockaddr_in);
 
-    // Accept connection from an incoming client
+    // Aceita a conexão de um cliente
     client_sock = accept(socket_desc, (struct sockaddr*)&client, (socklen_t*)&c);
     if (client_sock < 0) {
-        perror("Accept failed");
+        perror("Falha ao aceitar a conexão");
         return 1;
     }
-    puts("Connection accepted");
+    puts("Conexão aceita");
 
-    // Receive a message from client
+    // Recebe a mensagem do cliente
     while ((read_size = recv(client_sock, client_message, 2000, 0)) > 0) {
-        // Send the message back to client
+        // Adiciona o caractere nulo para finalizar a string
+        client_message[read_size] = '\0';
+
+        // Envia a mensagem de volta ao cliente
         write(client_sock, client_message, strlen(client_message));
+
+        // Limpa o buffer após enviar a mensagem
+        memset(client_message, 0, sizeof(client_message));
     }
 
+    // Verifica se a conexão foi encerrada
     if (read_size == 0) {
-        puts("Client disconnected");
+        puts("Cliente desconectado");
         fflush(stdout);
     } else if (read_size == -1) {
-        perror("Receive failed");
+        perror("Falha ao receber a mensagem");
     }
 
     return 0;
